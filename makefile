@@ -1,33 +1,32 @@
-SRC_DIR := src
-TEST_DIR := test
-INCLUDE_DIR := include
+SDIR := src
+TDIR := test
+IDIR := include
 ODIR := obj
 
 CXX := g++
-CXXFLAGS := -std=c++17 -I$(INCLUDE_DIR)
+CXXFLAGS := -std=c++20 -I$(IDIR)
 
-SRCS := $(wildcard $(SRC_DIR)/*.cpp)
-OBJS := $(patsubst $(SRC_DIR)/%.cpp,$(ODIR)/%.o,$(SRCS))
+SRCS := $(shell find $(SDIR) -name '*.cpp')
+OBJS := $(SRCS:$(SDIR)/%.cpp=$(ODIR)/%.o)
 
-TSRCS := $(wildcard $(TEST_DIR)/*.cpp)
-TOBJS := $(patsubst $(TEST_DIR)/%.cpp,$(ODIR)/%.o,$(TSRCS))
+TSRCS := $(shell find $(TDIR) -name '*.cpp'; find $(SDIR) -name '*.cpp' -a \! -name 'main.cpp')
+TOBJS := $(TSRCS:$(TDIR)/%.cpp=$(ODIR)/%.o)
+TOBJS := $(TOBJS:$(SDIR)/%.cpp=$(ODIR)/%.o)
 
-HDRS := $(wildcard $(INCLUDE_DIR)/*.hpp)
+HDRS := $(shell find $(IDIR) -name *.hpp)
 
-.PHONY: all clean
-
-all: ray-tracer testing
+.PHONY: clean
 
 ray-tracer: $(OBJS)
-	$(CXX) $(CXXFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $^ -o ray-tracer
 
-testing: $(TOBJS) $(filter-out $(ODIR)/main.o,$(OBJS))
-	$(CXX) $(CXXFLAGS) $^ -o $@
+testing: $(TOBJS)
+	$(CXX) $(CXXFLAGS) $^ -o testing
 
-$(ODIR)/%.o: $(SRC_DIR)/%.cpp $(HDRS) | $(ODIR)
+$(ODIR)/%.o: $(SDIR)/%.cpp $(HDRS) | $(ODIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(ODIR)/%.o: $(TEST_DIR)/%.cpp $(HDRS) | $(ODIR)
+$(ODIR)/%.o: $(TDIR)/%.cpp $(HDRS) | $(ODIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(ODIR):
